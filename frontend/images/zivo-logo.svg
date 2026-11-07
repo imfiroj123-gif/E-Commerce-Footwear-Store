@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" role="img" aria-labelledby="title">
+  <title id="title">ZIVO logo</title>
+  <defs>
+    <linearGradient id="brand" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#e8325a"/>
+      <stop offset="1" stop-color="#ff6b35"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#brand)" d="M24 2.5 45.5 14.75v18.5L24 45.5 2.5 33.25v-18.5L24 2.5Zm0 5.2L7 17.65v12.7L24 40.4l17-10.05v-12.7L24 7.7Z"/>
+  <path fill="url(#brand)" d="M14 15h20v5.1L21.5 29H34v5H14v-5.1L26.5 20H14v-5Z"/>
+</svg>

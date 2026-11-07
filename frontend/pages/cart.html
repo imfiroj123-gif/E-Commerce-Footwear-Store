@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZIVO | Your Cart</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .cart-page { padding: 120px 60px 80px; display: grid; grid-template-columns: 1fr 380px; gap: 40px; align-items: flex-start; }
+        .cart-items-section h2 { font-family: var(--font-display); font-size: 32px; margin-bottom: 32px; }
+        .cart-list-item {
+            display: flex; gap: 24px; padding: 24px 0;
+            border-bottom: 1px solid var(--border); align-items: flex-start;
+        }
+        .cart-list-image { width: 110px; height: 110px; border-radius: 12px; object-fit: cover; background: var(--surface); flex-shrink: 0; }
+        .cart-list-info { flex: 1; }
+        .cart-list-name { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+        .cart-list-meta { font-size: 13px; color: var(--text-muted); margin-bottom: 14px; }
+        .cart-list-controls { display: flex; align-items: center; gap: 16px; }
+        .qty-control { display: flex; align-items: center; gap: 0; background: var(--surface); border: 1.5px solid var(--border); border-radius: 30px; overflow: hidden; }
+        .qty-control button { width: 38px; height: 38px; background: none; border: none; color: var(--text-primary); font-size: 20px; cursor: pointer; transition: background 0.2s; }
+        .qty-control button:hover { background: var(--surface-hover); }
+        .qty-control span { width: 40px; text-align: center; font-weight: 700; }
+        .remove-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 14px; transition: color 0.2s; }
+        .remove-btn:hover { color: var(--accent); }
+        .cart-list-price { font-size: 20px; font-weight: 700; white-space: nowrap; }
+        .order-summary-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 20px; padding: 32px; position: sticky; top: 100px;
+        }
+        .summary-title { font-size: 20px; font-weight: 700; margin-bottom: 28px; }
+        .summary-row { display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 14px; color: var(--text-muted); }
+        .summary-total { display: flex; justify-content: space-between; font-size: 22px; font-weight: 800; margin: 20px 0 28px; padding-top: 20px; border-top: 1px solid var(--border); }
+        .summary-total span:last-child { color: var(--accent); }
+        .promo-input { display: flex; gap: 0; margin-bottom: 20px; }
+        .promo-input input { flex: 1; border-radius: 10px 0 0 10px; border-right: none; }
+        .promo-input button { border-radius: 0 10px 10px 0; padding: 14px 18px; font-size: 14px; background: var(--gradient-accent); border: none; color: white; cursor: pointer; font-family: var(--font-main); font-weight: 600; white-space: nowrap; }
+        .cart-empty-page { text-align: center; padding: 80px 40px; grid-column: 1/-1; }
+        .cart-empty-icon-large { font-size: 80px; margin-bottom: 24px; opacity: 0.3; }
+        @media(max-width:900px){ .cart-page{grid-template-columns:1fr;padding:120px 24px 60px;} .order-summary-card{position:static;} }
+        @media(max-width:600px){
+            .cart-page{padding:104px 16px 48px;gap:28px;}
+            .cart-items-section h2{font-size:27px;margin-bottom:22px;}
+            .cart-list-item{display:grid;grid-template-columns:76px minmax(0,1fr);gap:14px;padding:18px 0;}
+            .cart-list-image{width:76px;height:76px;}
+            .cart-list-info{min-width:0;}
+            .cart-list-name{font-size:15px;overflow-wrap:anywhere;}
+            .cart-list-controls{gap:12px;flex-wrap:wrap;}
+            .cart-list-price{grid-column:2;font-size:17px;}
+            .order-summary-card{padding:22px;}
+            .promo-input input{min-width:0;}
+            .promo-input button{padding:12px 14px;}
+            .cart-empty-page{padding:56px 8px;}
+            .cart-empty-icon-large{font-size:64px;}
+        }
+    </style>
+</head>
+<body>
+<header class="navbar" id="navbar">
+    <a href="../index.html" class="nav-logo" aria-label="ZIVO home"><span class="nav-logo-text">ZIVO</span><img class="nav-logo-image" src="../images/zivo-logo.svg?v=2" alt="ZIVO logo"></a>
+    <nav><ul class="nav-links">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="shop.html">Shop</a></li>
+    </ul></nav>
+    <div class="nav-actions">
+        <button class="nav-icon-btn" id="search-btn"><i class="fas fa-search"></i></button>
+        <button class="nav-icon-btn" id="cart-btn"><i class="fas fa-shopping-bag"></i><span class="cart-count" id="cart-count">0</span></button>
+        <button class="nav-icon-btn" onclick="window.location.href=Auth.isLoggedIn()?'orders.html':'login.html'"><i class="fas fa-user"></i></button>
+        <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+    </div>
+</header>
+<nav class="mobile-nav" id="mobile-nav"><a href="../index.html">Home</a><a href="shop.html">Shop</a></nav>
+<div class="search-overlay" id="search-overlay"><div class="search-overlay-inner"><button class="search-close" id="search-close">×</button><input type="text" id="search-input" placeholder="Search..."></div></div>
+
+<div class="cart-page" id="cart-page">
+    <div class="skeleton skeleton-card" style="height:400px;"></div>
+    <div class="skeleton skeleton-card" style="height:300px;"></div>
+</div>
+
+<script src="../js/utils.js"></script>
+<script src="../js/cart.js"></script>
+<script>
+function renderCartPage() {
+    const page = document.getElementById('cart-page');
+    const items = Cart.getItems();
+
+    if (items.length === 0) {
+        page.innerHTML = `<div class="cart-empty-page">
+            <div class="cart-empty-icon-large">🛒</div>
+            <h2 style="font-family:var(--font-display);font-size:36px;margin-bottom:12px;">Your cart is empty</h2>
+            <p style="color:var(--text-muted);margin-bottom:32px;">Looks like you haven't added anything yet.</p>
+            <a href="shop.html" class="btn-primary" style="display:inline-flex;gap:10px;">
+                <i class="fas fa-store"></i> Continue Shopping
+            </a>
+        </div>`;
+        return;
+    }
+
+    const sub = Cart.getSubtotal();
+    const ship = Cart.getShipping();
+    const tax = Cart.getTax();
+    const total = Cart.getTotal();
+
+    page.innerHTML = `
+    <div class="cart-items-section">
+        <h2>Shopping Cart <span style="color:var(--text-muted);font-size:18px;font-family:var(--font-main);font-weight:400;">(${Cart.getCount()} items)</span></h2>
+        <div id="cart-items-list">
+            ${items.map(item => `
+            <div class="cart-list-item" data-key="${item.key}">
+                <img src="${normalizeImageUrl(item.image)}" class="cart-list-image" alt="${item.name}" onerror="this.onerror=null;this.src='../images/product-image-placeholder.svg'">
+                <div class="cart-list-info">
+                    <h3 class="cart-list-name">${item.name}</h3>
+                    <p class="cart-list-meta">${item.size ? 'Size: '+item.size : 'One Size'} &nbsp;·&nbsp; $${item.price} each</p>
+                    <div class="cart-list-controls">
+                        <div class="qty-control">
+                            <button onclick="updateQty('${item.key}', ${item.qty-1})">−</button>
+                            <span>${item.qty}</span>
+                            <button onclick="updateQty('${item.key}', ${item.qty+1})">+</button>
+                        </div>
+                        <button class="remove-btn" onclick="removeItem('${item.key}')"><i class="fas fa-trash"></i> Remove</button>
+                    </div>
+                </div>
+                <div class="cart-list-price">$${(item.price * item.qty).toFixed(2)}</div>
+            </div>`).join('')}
+        </div>
+        <div style="display:flex;gap:16px;margin-top:28px;flex-wrap:wrap;">
+            <a href="shop.html" class="btn-outline" style="font-size:14px;padding:12px 24px;display:inline-flex;gap:8px;">
+                <i class="fas fa-arrow-left"></i> Continue Shopping
+            </a>
+        </div>
+    </div>
+    <div class="order-summary-card">
+        <h3 class="summary-title">Order Summary</h3>
+        <div class="promo-input">
+            <input type="text" class="form-input" placeholder="Promo code" style="border-radius:10px 0 0 10px;border-right:none;">
+            <button onclick="showToast('Promo codes coming soon!','info')">Apply</button>
+        </div>
+        <div class="summary-row"><span>Subtotal</span><span>$${sub.toFixed(2)}</span></div>
+        <div class="summary-row"><span>Shipping</span><span>${ship===0?'<span style="color:#22c55e;font-weight:600;">FREE</span>':'$'+ship.toFixed(2)}</span></div>
+        <div class="summary-row"><span>Tax (18% GST)</span><span>$${tax.toFixed(2)}</span></div>
+        ${sub < 3000 ? `<p style="font-size:12px;color:var(--gold);margin-bottom:8px;">Add $${(3000-sub).toFixed(0)} more for free shipping!</p>` : ''}
+        <div class="summary-total"><span>Total</span><span>$${total.toFixed(2)}</span></div>
+        <a href="checkout.html" class="btn-primary" style="width:100%;justify-content:center;text-decoration:none;padding:18px;font-size:16px;">
+            Checkout <i class="fas fa-arrow-right"></i>
+        </a>
+        <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:20px;color:var(--text-muted);font-size:12px;">
+            <span>🔒</span><span>Secure 256-bit SSL encrypted checkout</span>
+        </div>
+        <div style="display:flex;justify-content:center;gap:12px;margin-top:16px;font-size:22px;">
+            💳 🏦 📱
+        </div>
+    </div>`;
+}
+
+function updateQty(key, qty) {
+    Cart.updateQty(key, qty);
+    renderCartPage();
+    updateCartBadge();
+}
+
+function removeItem(key) {
+    Cart.removeItem(key);
+    renderCartPage();
+    updateCartBadge();
+}
+
+renderCartPage();
+document.addEventListener('cart:updated', renderCartPage);
+</script>
+</body>
+</html>

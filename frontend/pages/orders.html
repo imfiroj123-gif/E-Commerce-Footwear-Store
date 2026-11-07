@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZIVO | My Orders</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .orders-page { padding: 120px 60px 80px; }
+        .orders-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; }
+        .orders-title { font-family: var(--font-display); font-size: 40px; font-weight: 700; }
+        .order-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 20px; overflow: hidden; transition: border-color 0.3s; }
+        .order-card:hover { border-color: var(--border-active); }
+        .order-card-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 12px; }
+        .order-id { font-size: 13px; color: var(--text-muted); }
+        .order-id strong { color: var(--text-primary); font-size: 15px; }
+        .order-date { font-size: 13px; color: var(--text-muted); }
+        .order-card-body { padding: 20px 24px; }
+        .order-items-preview { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+        .order-item-thumb { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; background: var(--bg-tertiary); }
+        .order-card-footer { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; background: var(--bg-tertiary); flex-wrap: wrap; gap: 12px; }
+        .order-total { font-size: 18px; font-weight: 700; }
+        .empty-orders { text-align: center; padding: 80px 40px; }
+        @media(max-width:768px){ .orders-page{padding:120px 24px 60px;} }
+        @media(max-width:600px){
+            .orders-page{padding:104px 16px 48px;}
+            .orders-header{align-items:flex-start;flex-direction:column;gap:18px;margin-bottom:28px;}
+            .orders-title{font-size:32px;}
+            .order-card-header,.order-card-body,.order-card-footer{padding-left:16px;padding-right:16px;}
+            .order-card-footer{align-items:flex-start;}
+            .empty-orders{padding:56px 12px;}
+        }
+    </style>
+</head>
+<body>
+<header class="navbar" id="navbar">
+    <a href="../index.html" class="nav-logo" aria-label="ZIVO home"><span class="nav-logo-text">ZIVO</span><img class="nav-logo-image" src="../images/zivo-logo.svg?v=2" alt="ZIVO logo"></a>
+    <nav><ul class="nav-links"><li><a href="../index.html">Home</a></li><li><a href="shop.html">Shop</a></li></ul></nav>
+    <div class="nav-actions">
+        <button class="nav-icon-btn" id="search-btn"><i class="fas fa-search"></i></button>
+        <button class="nav-icon-btn" id="cart-btn"><i class="fas fa-shopping-bag"></i><span class="cart-count" id="cart-count">0</span></button>
+        <button class="nav-icon-btn" onclick="Auth.logout()"><i class="fas fa-sign-out-alt"></i></button>
+        <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+    </div>
+</header>
+<nav class="mobile-nav" id="mobile-nav"><a href="../index.html">Home</a><a href="shop.html">Shop</a></nav>
+<div class="search-overlay" id="search-overlay"><div class="search-overlay-inner"><button class="search-close" id="search-close">×</button><input type="text" id="search-input" placeholder="Search..."></div></div>
+
+<div class="orders-page">
+    <div class="orders-header">
+        <div>
+            <h1 class="orders-title">My Orders</h1>
+            <p style="color:var(--text-muted);margin-top:6px;">Track and manage your purchases</p>
+        </div>
+        <a href="shop.html" class="btn-outline" style="font-size:14px;padding:12px 24px;display:inline-flex;gap:8px;">
+            <i class="fas fa-plus"></i> Shop More
+        </a>
+    </div>
+    <div id="orders-list">
+        <div class="skeleton skeleton-card" style="height:140px;margin-bottom:16px;"></div>
+        <div class="skeleton skeleton-card" style="height:140px;margin-bottom:16px;"></div>
+        <div class="skeleton skeleton-card" style="height:140px;"></div>
+    </div>
+</div>
+
+<script src="../js/utils.js"></script>
+<script src="../js/cart.js"></script>
+<script>
+if (!Auth.isLoggedIn()) window.location.href = 'login.html';
+
+async function loadOrders() {
+    const container = document.getElementById('orders-list');
+    try {
+        const orders = await authFetch(`${API_BASE}/orders/myorders`);
+        if (!orders.length) {
+            container.innerHTML = `<div class="empty-orders">
+                <div style="font-size:72px;margin-bottom:20px;opacity:.3;">📦</div>
+                <h3 style="font-size:24px;margin-bottom:10px;">No orders yet</h3>
+                <p style="color:var(--text-muted);margin-bottom:28px;">When you place an order, it will appear here.</p>
+                <a href="shop.html" class="btn-primary" style="display:inline-flex;gap:8px;"><i class="fas fa-store"></i> Start Shopping</a>
+            </div>`;
+            return;
+        }
+        container.innerHTML = orders.map(o => {
+            const paid = o.isPaid;
+            const delivered = o.isDelivered;
+            const status = delivered ? 'delivered' : paid ? 'paid' : 'pending';
+            return `
+            <div class="order-card">
+                <div class="order-card-header">
+                    <div class="order-id">Order ID: <strong>#${o._id.slice(-8).toUpperCase()}</strong></div>
+                    <div class="order-date"><i class="fas fa-calendar" style="margin-right:6px;"></i>${new Date(o.createdAt).toLocaleDateString('en-IN',{year:'numeric',month:'short',day:'numeric'})}</div>
+                    <span class="status-badge status-${status}">${delivered?'✅ Delivered':paid?'💳 Paid':'⏳ Pending'}</span>
+                </div>
+                <div class="order-card-body">
+                    <div class="order-items-preview">
+                        ${o.orderItems.slice(0,4).map(item => `<img src="${normalizeImageUrl(item.image)}" class="order-item-thumb" alt="${item.name}" onerror="this.onerror=null;this.src='../images/product-image-placeholder.svg'">`).join('')}
+                        ${o.orderItems.length>4?`<div class="order-item-thumb" style="display:flex;align-items:center;justify-content:center;background:var(--surface-hover);color:var(--text-muted);font-size:13px;font-weight:600;">+${o.orderItems.length-4}</div>`:''}
+                    </div>
+                    <p style="font-size:14px;color:var(--text-muted);">${o.orderItems.length} item${o.orderItems.length>1?'s':''} · ${o.paymentMethod}</p>
+                </div>
+                <div class="order-card-footer">
+                    <div>
+                        ${o.shippingAddress ? `<p style="font-size:13px;color:var(--text-muted);">📍 ${o.shippingAddress.city}, ${o.shippingAddress.country}</p>` : ''}
+                    </div>
+                    <div class="order-total">$${o.totalPrice.toFixed(2)}</div>
+                </div>
+            </div>`;
+        }).join('');
+    } catch(e) {
+        container.innerHTML = `<div style="text-align:center;padding:60px;color:var(--text-muted);">Failed to load orders. <a href="login.html" style="color:var(--accent);">Please login again</a></div>`;
+    }
+}
+loadOrders();
+</script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZIVO Admin | Analytics</title>
+    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="admin-layout">
+    <aside class="sidebar">
+        <div class="sidebar-header"><div class="sidebar-logo">ZIVO</div><div class="sidebar-badge">Admin Portal</div></div>
+        <nav class="sidebar-nav">
+            <div class="nav-group-label">Main</div>
+            <a class="nav-item" href="../dashboard/index.html"><span class="nav-icon">📊</span> Dashboard</a>
+            <a class="nav-item" href="../products/index.html"><span class="nav-icon">👟</span> Products</a>
+            <a class="nav-item" href="../orders/index.html"><span class="nav-icon">📦</span> Orders</a>
+            <div class="nav-group-label">Insights</div>
+            <a class="nav-item active" href="index.html"><span class="nav-icon">📈</span> Analytics</a>
+            <div class="nav-group-label">Settings</div>
+            <a class="nav-item" href="../../index.html"><span class="nav-icon">🏠</span> View Store</a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="sidebar-user">
+                <div class="sidebar-user-avatar" id="sidebar-user-avatar">A</div>
+                <div><div class="sidebar-user-name" id="sidebar-user-name">Admin</div><div class="sidebar-user-role">Super Admin</div></div>
+                <button class="sidebar-logout" onclick="Auth.logout()">Out</button>
+            </div>
+        </div>
+    </aside>
+    <div class="main-content">
+        <header class="top-header">
+            <div class="header-left"><button class="hamburger-admin">☰</button><div class="page-breadcrumb">Insights / <span>Analytics</span></div></div>
+        </header>
+        <div class="page-body">
+            <div class="page-title">Store Analytics</div>
+            <div class="page-subtitle">Deep dive into your store's performance.</div>
+
+            <div class="grid-2">
+                <div class="chart-card">
+                    <div class="chart-header"><span class="chart-title">Revenue by Day (Last 30 Days)</span></div>
+                    <canvas id="rev-chart" height="200"></canvas>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header"><span class="chart-title">Sales by Category</span></div>
+                    <canvas id="cat-chart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="../js/admin.js"></script>
+<script>
+async function loadAnalytics() {
+    try {
+        const stats = await api(`${API_BASE}/orders/admin/stats`);
+        const labels = [], data = [];
+        const daily = stats.dailyRevenue || [];
+        for (let i = 29; i >= 0; i--) {
+            const d = new Date(); d.setDate(d.getDate() - i);
+            const key = d.toISOString().split('T')[0];
+            labels.push(d.toLocaleDateString('en',{month:'short',day:'numeric'}));
+            const entry = daily.find(x => x._id === key);
+            data.push(entry ? entry.revenue : 0);
+        }
+        new Chart(document.getElementById('rev-chart'), {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{ label: 'Revenue ($)', data, backgroundColor: 'rgba(232,50,90,0.8)', borderRadius: 4 }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { color: '#888' } }, y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#888', callback: v => '$'+v } } } }
+        });
+
+        // Dummy category data since our backend doesn't aggregate by category yet
+        new Chart(document.getElementById('cat-chart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Sneakers', 'Boots', 'Luxury', 'Limited'],
+                datasets: [{ data: [45, 20, 15, 20], backgroundColor: ['#e8325a', '#ff6b35', '#c9a96e', '#8b5cf6'], borderWidth: 0 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#fff' } } } }
+        });
+    } catch(e) { console.error(e); }
+}
+loadAnalytics();
+</script>
+</body>
+</html>

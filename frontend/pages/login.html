@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZIVO | Sign In</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        body { min-height: 100vh; background: var(--bg-primary); }
+        .auth-wrapper {
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+        .auth-visual {
+            background: #ebe6df; /* Beige to match shoe */
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 60px;
+            border-right: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 5px 0 25px rgba(0,0,0,0.1);
+        }
+        .auth-visual-bg {
+            position: absolute;
+            inset: 0;
+            background-image: url('/images/login-bg.jpg?v=4');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 1;
+        }
+        .auth-visual-gradient {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(235,230,223,1) 0%, rgba(235,230,223,0) 40%);
+        }
+        .auth-visual-content { position: relative; z-index: 2; }
+        .auth-visual-quote {
+            font-family: var(--font-display);
+            font-size: 36px;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 16px;
+            color: #111;
+        }
+        .auth-visual-sub { color: #444; font-size: 15px; font-weight: 500; }
+
+        .auth-form-section {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 60px 80px;
+            background: var(--bg-secondary);
+        }
+        .auth-logo {
+            font-family: var(--font-display);
+            font-size: 22px;
+            font-weight: 700;
+            background: var(--gradient-accent);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 48px;
+        }
+        .auth-title { font-size: 30px; font-weight: 700; margin-bottom: 8px; }
+        .auth-sub { color: var(--text-muted); font-size: 15px; margin-bottom: 36px; }
+        .auth-footer { margin-top: 28px; text-align: center; font-size: 14px; color: var(--text-muted); }
+        .auth-footer a { color: var(--accent); }
+        .divider-or { display: flex; align-items: center; gap: 12px; margin: 24px 0; color: var(--text-faint); font-size: 13px; }
+        .divider-or::before, .divider-or::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+        .error-alert {
+            background: rgba(232,50,90,0.08);
+            border: 1px solid rgba(232,50,90,0.3);
+            color: var(--accent);
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .input-wrapper { position: relative; }
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+        .input-with-icon { padding-left: 46px !important; }
+        .eye-toggle {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 16px;
+            transition: color var(--transition-fast);
+        }
+        .eye-toggle:hover { color: var(--text-primary); }
+
+        @media(max-width:1100px) and (min-width:901px){
+            .auth-visual{padding:40px;}
+            .auth-form-section{padding:48px 40px;}
+        }
+        @media (max-width: 900px) {
+            .auth-wrapper { display: block; }
+            .auth-visual { 
+                position: fixed; inset: 0; z-index: 0; padding: 40px 20px; justify-content: flex-start;
+                border-right: none;
+                box-shadow: none;
+            }
+            .auth-visual-content { display: none; }
+            .auth-form-section { 
+                position: relative; z-index: 1; padding: 80px 24px 60px; 
+                background: rgba(18, 18, 18, 0.75); 
+                backdrop-filter: blur(12px); 
+                -webkit-backdrop-filter: blur(12px);
+                min-height: 100vh;
+            }
+        }
+        @media(max-width:600px){
+            .auth-form-section{padding:72px 20px 48px;}
+            .auth-logo{margin-bottom:36px;}
+            .auth-title{font-size:27px;}
+            .auth-sub{margin-bottom:28px;}
+            .auth-visual-bg{background-size:cover;background-position:center top;}
+        }
+    </style>
+</head>
+<body>
+<div class="auth-wrapper">
+    <!-- VISUAL SIDE -->
+    <div class="auth-visual">
+        <div class="auth-visual-bg"></div>
+        <div class="auth-visual-gradient"></div>
+        <div class="auth-visual-content">
+            <h2 class="auth-visual-quote">Step into your<br><span style="color:var(--accent);">premium world.</span></h2>
+            <p class="auth-visual-sub">Access exclusive drops, track your orders,<br>and manage your ZIVO account.</p>
+        </div>
+    </div>
+
+    <!-- FORM SIDE -->
+    <div class="auth-form-section">
+        <a href="../index.html" class="auth-logo">ZIVO</a>
+        <h1 class="auth-title">Welcome back</h1>
+        <p class="auth-sub">Sign in to your account to continue.</p>
+
+        <div class="error-alert" id="error-alert"></div>
+
+        <form id="login-form" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label class="form-label">Email Address</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-envelope input-icon"></i>
+                    <input type="email" id="email" class="form-input input-with-icon" placeholder="you@example.com" required autocomplete="email">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label" style="display:flex;justify-content:space-between;">
+                    Password <a href="#" style="color:var(--accent);font-size:12px;">Forgot password?</a>
+                </label>
+                <div class="input-wrapper">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="password" class="form-input input-with-icon" placeholder="••••••••" required autocomplete="current-password">
+                    <button type="button" class="eye-toggle" onclick="togglePassword('password', this)">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-primary" id="login-btn" style="width:100%;justify-content:center;padding:16px;font-size:16px;">
+                Sign In <i class="fas fa-arrow-right"></i>
+            </button>
+        </form>
+
+       
+
+        <!-- <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color 0.3s;" 
+             onclick="handleAdminQuickLogin()">
+            <div style="width:36px;height:36px;background:var(--accent-glow);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;">🔑</div>
+            <div>
+                <p style="font-size:14px;font-weight:600;">Quick Admin Login</p>
+                <p style="font-size:12px;color:var(--text-muted);">admin@zivo.com / admin123</p>
+            </div>
+            <i class="fas fa-chevron-right" style="margin-left:auto;color:var(--text-muted);"></i>
+        </div> -->
+
+        <p class="auth-footer">
+            Don't have an account? <a href="register.html">Create one →</a>
+        </p>
+    </div>
+</div>
+
+<script src="../js/utils.js"></script>
+<script src="../js/cart.js"></script>
+<script>
+// Redirect if already logged in
+if (Auth.isLoggedIn()) {
+    window.location.href = Auth.isAdmin() ? '../admin/index.html' : '../index.html';
+}
+
+function togglePassword(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const icon = btn.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'fas fa-eye';
+    }
+}
+
+async function handleLogin(e) {
+    e.preventDefault();
+    const btn = document.getElementById('login-btn');
+    const errorEl = document.getElementById('error-alert');
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    btn.textContent = 'Signing in...';
+    btn.disabled = true;
+    errorEl.style.display = 'none';
+
+    try {
+        const data = await authFetch(`${API_BASE}/users/login`, {
+            method: 'POST',
+            body: JSON.stringify({ email, password }),
+        });
+        Auth.setUser(data);
+        showToast(`Welcome back, ${data.name}! 👋`, 'success');
+        setTimeout(() => {
+            window.location.href = data.isAdmin ? '../admin/index.html' : '../index.html';
+        }, 800);
+    } catch(err) {
+        errorEl.textContent = err.message || 'Invalid email or password';
+        errorEl.style.display = 'block';
+        btn.innerHTML = 'Sign In <i class="fas fa-arrow-right"></i>';
+        btn.disabled = false;
+    }
+}
+
+function handleAdminQuickLogin() {
+    document.getElementById('email').value = 'admin@zivo.com';
+    document.getElementById('password').value = 'admin123';
+    document.getElementById('login-form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+}
+</script>
+</body>
+</html>

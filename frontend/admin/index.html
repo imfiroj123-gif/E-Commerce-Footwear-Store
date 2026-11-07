@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZIVO Admin | Login</title>
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        body { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: radial-gradient(ellipse at 50% 0%, rgba(232,50,90,0.08) 0%, transparent 60%), var(--bg); }
+        .login-card { background: var(--bg-2); border: 1px solid var(--border-active); border-radius: 20px; padding: 48px; width: 100%; max-width: 420px; }
+        .login-logo { font-size: 28px; font-weight: 800; letter-spacing: 3px; background: linear-gradient(135deg,#e8325a,#ff6b35); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 6px; }
+        .login-badge { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 40px; display: block; }
+        .login-title { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+        .login-sub { font-size: 14px; color: var(--text-2); margin-bottom: 32px; }
+        .input-wrap { position: relative; }
+        .input-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-3); font-size: 15px; }
+        .input-pl { padding-left: 42px !important; }
+        .error-box { background: var(--accent-glow); border: 1px solid rgba(232,50,90,0.3); color: var(--accent); padding: 11px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 18px; display: none; }
+        @media(max-width:480px){ body{padding:16px;} .login-card{padding:30px 22px;border-radius:16px;} .login-badge{margin-bottom:32px;} }
+    </style>
+</head>
+<body>
+<div class="login-card">
+    <div class="login-logo">ZIVO</div>
+    <span class="login-badge">Admin Portal</span>
+    <h1 class="login-title">Admin Sign In</h1>
+    <p class="login-sub">Access the ZIVO control panel.</p>
+    <div class="error-box" id="error-box"></div>
+    <form onsubmit="doLogin(event)">
+        <div class="form-group">
+            <label class="form-label">Email</label>
+            <div class="input-wrap">
+                <i class="fas fa-envelope input-icon"></i>
+                <input type="email" id="email" class="form-input input-pl" placeholder="admin@zivo.com" value="admin@zivo.com" required>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Password</label>
+            <div class="input-wrap">
+                <i class="fas fa-lock input-icon"></i>
+                <input type="password" id="password" class="form-input input-pl" placeholder="••••••••" value="admin123" required>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary" id="login-btn" style="width:100%;justify-content:center;padding:14px;font-size:15px;margin-top:8px;">
+            Sign In <i class="fas fa-arrow-right"></i>
+        </button>
+    </form>
+    <p style="text-align:center;margin-top:24px;font-size:13px;color:var(--text-2);">
+        <a href="../index.html" style="color:var(--accent);">← Back to Store</a>
+    </p>
+</div>
+<script>
+const API_BASE = 'http://localhost:5000/api';
+// Redirect if already admin
+const existing = JSON.parse(localStorage.getItem('zivo_user')||'null');
+if (existing?.isAdmin) window.location.href = 'dashboard/index.html';
+
+async function doLogin(e) {
+    e.preventDefault();
+    const btn = document.getElementById('login-btn');
+    const err = document.getElementById('error-box');
+    btn.innerHTML = 'Signing in... <i class="fas fa-spinner fa-spin"></i>';
+    btn.disabled = true;
+    err.style.display = 'none';
+    try {
+        const res = await fetch(`${API_BASE}/users/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: document.getElementById('email').value, password: document.getElementById('password').value }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message);
+        if (!data.isAdmin) throw new Error('This account does not have admin access.');
+        localStorage.setItem('zivo_user', JSON.stringify(data));
+        window.location.href = 'dashboard/index.html';
+    } catch(e2) {
+        err.textContent = e2.message;
+        err.style.display = 'block';
+        btn.innerHTML = 'Sign In <i class="fas fa-arrow-right"></i>';
+        btn.disabled = false;
+    }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZIVO Admin | Orders</title>
+    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<div class="admin-layout">
+    <aside class="sidebar">
+        <div class="sidebar-header"><div class="sidebar-logo">ZIVO</div><div class="sidebar-badge">Admin Portal</div></div>
+        <nav class="sidebar-nav">
+            <div class="nav-group-label">Main</div>
+            <a class="nav-item" href="../dashboard/index.html"><span class="nav-icon">📊</span> Dashboard</a>
+            <a class="nav-item" href="../products/index.html"><span class="nav-icon">👟</span> Products</a>
+            <a class="nav-item active" href="index.html"><span class="nav-icon">📦</span> Orders</a>
+            <div class="nav-group-label">Settings</div>
+            <a class="nav-item" href="../../index.html"><span class="nav-icon">🏠</span> View Store</a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="sidebar-user">
+                <div class="sidebar-user-avatar" id="sidebar-user-avatar">A</div>
+                <div><div class="sidebar-user-name" id="sidebar-user-name">Admin</div><div class="sidebar-user-role">Super Admin</div></div>
+                <button class="sidebar-logout" onclick="Auth.logout()">Out</button>
+            </div>
+        </div>
+    </aside>
+    <div class="main-content">
+        <header class="top-header">
+            <div class="header-left"><button class="hamburger-admin">☰</button><div class="page-breadcrumb">Orders / <span>All Orders</span></div></div>
+            <div class="header-right">
+                <input class="header-search" id="search-input" placeholder="Search by ID or customer..." oninput="filterOrders()">
+            </div>
+        </header>
+        <div class="page-body">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:16px;">
+                <div><div class="page-title">Orders</div><div class="page-subtitle" id="order-count-label">Loading...</div></div>
+                <div style="display:flex;gap:10px;">
+                    <button class="btn btn-ghost btn-sm filter-btn active" onclick="setFilter('all',this)">All</button>
+                    <button class="btn btn-ghost btn-sm filter-btn" onclick="setFilter('pending',this)">Pending</button>
+                    <button class="btn btn-ghost btn-sm filter-btn" onclick="setFilter('paid',this)">Paid</button>
+                    <button class="btn btn-ghost btn-sm filter-btn" onclick="setFilter('delivered',this)">Delivered</button>
+                </div>
+            </div>
+            <div class="table-card">
+                <div id="orders-table"><div class="spinner"></div></div>
+                <div class="pagination" id="pagination"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ORDER DETAIL MODAL -->
+<div class="modal-overlay" id="order-modal">
+    <div class="modal" style="max-width:680px;">
+        <div class="modal-header">
+            <span class="modal-title" id="modal-order-id">Order Details</span>
+            <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <div id="modal-body"><div class="spinner"></div></div>
+    </div>
+</div>
+
+<script src="../js/admin.js"></script>
+<script>
+let allOrders = [];
+let currentFilter = 'all';
+let searchTerm = '';
+
+async function loadOrders() {
+    try {
+        allOrders = await api(`${API_BASE}/orders`);
+        renderOrders();
+    } catch(e) {
+        document.getElementById('orders-table').innerHTML = `<p style="padding:20px;color:var(--text-2)">Error: ${e.message}</p>`;
+    }
+}
+
+function renderOrders() {
+    let filtered = allOrders;
+    if (currentFilter === 'pending') filtered = filtered.filter(o => !o.isPaid && !o.isDelivered);
+    if (currentFilter === 'paid') filtered = filtered.filter(o => o.isPaid && !o.isDelivered);
+    if (currentFilter === 'delivered') filtered = filtered.filter(o => o.isDelivered);
+    if (searchTerm) {
+        const s = searchTerm.toLowerCase();
+        filtered = filtered.filter(o => o._id.includes(s) || (o.user?.name||'').toLowerCase().includes(s) || (o.user?.email||'').toLowerCase().includes(s));
+    }
+
+    document.getElementById('order-count-label').textContent = `${filtered.length} orders`;
+
+    if (!filtered.length) {
+        document.getElementById('orders-table').innerHTML = `<div class="empty-state"><div class="empty-icon">📦</div><p class="empty-title">No orders match</p></div>`;
+        document.getElementById('pagination').innerHTML = '';
+        return;
+    }
+
+    document.getElementById('orders-table').innerHTML = `
+        <div class="table-responsive"><table>
+            <thead><tr><th>Order ID</th><th>Customer</th><th>Date</th><th>Total</th><th>Payment</th><th>Delivery</th><th>Actions</th></tr></thead>
+            <tbody>${filtered.map(o => `
+                <tr>
+                    <td><strong>${fmt.shortId(o._id)}</strong><br><small style="color:var(--text-3)">${fmt.shortId(o._id)}</small></td>
+                    <td><strong>${o.user?.name||'Guest'}</strong><br><small style="color:var(--text-3)">${o.user?.email||''}</small></td>
+                    <td>${fmt.date(o.createdAt)}</td>
+                    <td><strong style="color:var(--green)">${fmt.price(o.totalPrice)}</strong></td>
+                    <td>${o.isPaid?`<span class="badge badge-success">✅ Paid</span>`:o.paymentMethod==='cod'?`<span class="badge badge-warning">COD</span>`:`<span class="badge badge-danger">Unpaid</span>`}</td>
+                    <td>${o.isDelivered?`<span class="badge badge-info">✅ Delivered</span>`:`<span class="badge badge-warning">⏳ Pending</span>`}</td>
+                    <td>
+                        <div style="display:flex;gap:8px;">
+                            <button class="btn btn-ghost btn-sm" onclick="viewOrder('${o._id}')"><i class="fas fa-eye"></i></button>
+                            ${!o.isDelivered?`<button class="btn btn-success btn-sm" onclick="markDelivered('${o._id}')"><i class="fas fa-check"></i></button>`:''}
+                        </div>
+                    </td>
+                </tr>`).join('')}
+            </tbody>
+        </table></div>`;
+    document.getElementById('pagination').innerHTML = '';
+}
+
+function setFilter(f, el) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    renderOrders();
+}
+
+function filterOrders() { searchTerm = document.getElementById('search-input').value.trim(); renderOrders(); }
+
+async function viewOrder(id) {
+    document.getElementById('modal-order-id').textContent = 'Order ' + fmt.shortId(id);
+    document.getElementById('modal-body').innerHTML = '<div class="spinner"></div>';
+    document.getElementById('order-modal').classList.add('active');
+    try {
+        const o = await api(`${API_BASE}/orders/${id}`);
+        document.getElementById('modal-body').innerHTML = `
+            <div class="grid-2" style="margin-bottom:24px;">
+                <div class="table-card" style="padding:24px;">
+                    <h3 style="margin-bottom:12px;font-size:16px;">Customer Details</h3>
+                    <p style="color:var(--text-2);margin-bottom:6px;"><i class="fas fa-user" style="width:20px;"></i> ${o.user?.name||'Guest'}</p>
+                    <p style="color:var(--text-2);margin-bottom:6px;"><i class="fas fa-envelope" style="width:20px;"></i> ${o.user?.email||'N/A'}</p>
+                    <p style="color:var(--text-2);"><i class="fas fa-calendar" style="width:20px;"></i> ${new Date(o.createdAt).toLocaleString()}</p>
+                </div>
+                <div class="table-card" style="padding:24px;">
+                    <h3 style="margin-bottom:12px;font-size:16px;">Shipping Address</h3>
+                    <p style="color:var(--text-2);line-height:1.6;">
+                        ${o.shippingAddress.address}<br>
+                        ${o.shippingAddress.city}, ${o.shippingAddress.postalCode}<br>
+                        ${o.shippingAddress.country}
+                    </p>
+                </div>
+            </div>
+            <div style="background:var(--bg-3);border-radius:10px;padding:20px;margin-bottom:24px;">
+                <p style="font-size:12px;color:var(--text-2);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;">Items Ordered</p>
+                ${o.orderItems.map(item=>`<div style="display:flex;gap:14px;align-items:center;margin-bottom:12px;">
+                    <img src="${imageUrlOrPlaceholder(item.image)}" style="width:52px;height:52px;border-radius:8px;object-fit:cover;background:var(--surface);" onerror="this.onerror=null;this.src='../../images/product-image-placeholder.svg'">
+                    <div style="flex:1;"><p style="font-weight:600;font-size:14px;">${item.name}</p><p style="color:var(--text-2);font-size:13px;">Qty: ${item.qty}</p></div>
+                    <span style="font-weight:700;">$${(item.price*item.qty).toFixed(2)}</span>
+                </div>`).join('')}
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;font-size:14px;">
+                <div style="display:flex;justify-content:space-between;color:var(--text-2);"><span>Subtotal</span><span>$${(o.totalPrice-o.taxPrice-o.shippingPrice).toFixed(2)}</span></div>
+                <div style="display:flex;justify-content:space-between;color:var(--text-2);"><span>Shipping</span><span>$${o.shippingPrice}</span></div>
+                <div style="display:flex;justify-content:space-between;color:var(--text-2);"><span>Tax</span><span>$${o.taxPrice}</span></div>
+                <div style="display:flex;justify-content:space-between;font-size:18px;font-weight:800;padding-top:12px;border-top:1px solid var(--border);">
+                    <span>Total</span><span style="color:var(--green);">${fmt.price(o.totalPrice)}</span>
+                </div>
+            </div>
+            <div style="display:flex;gap:12px;">
+                ${!o.isPaid?`<button class="btn btn-success" onclick="markPaid('${o._id}')"><i class="fas fa-check"></i> Mark Paid</button>`:'<span class="badge badge-success">✅ Paid</span>'}
+                ${!o.isDelivered?`<button class="btn btn-primary" onclick="markDelivered('${o._id}')"><i class="fas fa-truck"></i> Mark Delivered</button>`:'<span class="badge badge-info">✅ Delivered</span>'}
+            </div>`;
+    } catch(e) { document.getElementById('modal-body').innerHTML = `<p style="color:var(--text-2)">Error: ${e.message}</p>`; }
+}
+
+function closeModal() { document.getElementById('order-modal').classList.remove('active'); }
+document.getElementById('order-modal').addEventListener('click', (e) => { if(e.target===e.currentTarget) closeModal(); });
+
+async function markDelivered(id) {
+    try {
+        await api(`${API_BASE}/orders/${id}/deliver`, { method:'PUT' });
+        showToast('Marked as delivered ✅', 'success');
+        closeModal();
+        loadOrders();
+    } catch(e) { showToast(e.message,'error'); }
+}
+
+async function markPaid(id) {
+    try {
+        await api(`${API_BASE}/orders/${id}/pay`, { method:'PUT', body: JSON.stringify({ status:'ADMIN_MARK' }) });
+        showToast('Marked as paid ✅','success');
+        viewOrder(id);
+        loadOrders();
+    } catch(e) { showToast(e.message,'error'); }
+}
+
+loadOrders();
+</script>
+</body>
+</html>

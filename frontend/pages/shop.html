@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZIVO | Shop — Browse Premium Footwear</title>
+    <meta name="description" content="Shop ZIVO premium sneakers, boots, and luxury footwear. Filter by category, price, and size.">
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
+    <style>
+        .shop-layout { display: flex; gap: 32px; align-items: flex-start; padding: 30px 60px 80px; }
+        .shop-sidebar {
+            width: 280px;
+            flex-shrink: 0;
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 28px;
+            border: 1px solid var(--border);
+            position: sticky;
+            top: 100px;
+        }
+        .sidebar-section { margin-bottom: 32px; }
+        .sidebar-section:last-child { margin-bottom: 0; }
+        .sidebar-title {
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+        .filter-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: color var(--transition-fast);
+            font-size: 15px;
+            color: var(--text-secondary);
+        }
+        .filter-option:hover, .filter-option.active { color: var(--text-primary); }
+        .filter-option .filter-count {
+            margin-left: auto;
+            font-size: 12px;
+            color: var(--text-faint);
+            background: var(--bg-tertiary);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        .filter-checkbox {
+            width: 18px; height: 18px;
+            border: 1.5px solid var(--border-active);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all var(--transition-fast);
+        }
+        .filter-option.active .filter-checkbox {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+        .filter-option.active .filter-checkbox::after { content: '✓'; font-size: 11px; color: white; font-weight: 700; }
+
+        .price-range { margin-top: 12px; }
+        .price-inputs { display: flex; gap: 10px; margin-top: 12px; }
+        .price-input {
+            width: 100%;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: var(--font-main);
+            outline: none;
+        }
+        .price-input:focus { border-color: var(--accent); }
+
+        .shop-main { flex: 1; min-width: 0; }
+        .shop-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+        }
+        .shop-search {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: 12px;
+            padding: 10px 18px;
+            flex: 1;
+            max-width: 360px;
+            transition: border-color var(--transition-fast);
+        }
+        .shop-search:focus-within { border-color: var(--accent); }
+        .shop-search input {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 15px;
+            font-family: var(--font-main);
+            outline: none;
+            flex: 1;
+        }
+        .shop-search input::placeholder { color: var(--text-faint); }
+        .results-count { font-size: 14px; color: var(--text-muted); }
+        .sort-select {
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            color: var(--text-primary);
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: var(--font-main);
+            outline: none;
+            cursor: pointer;
+        }
+        .sort-select:focus { border-color: var(--accent); }
+        .sort-select option { background: var(--surface); }
+
+        .clear-filters-btn {
+            background: var(--accent-glow);
+            border: 1px solid rgba(232,50,90,0.3);
+            color: var(--accent);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            display: none;
+        }
+        .clear-filters-btn.visible { display: block; }
+        .clear-filters-btn:hover { background: var(--accent); color: white; }
+
+        @media (max-width: 900px) {
+            .shop-layout { flex-direction: column; padding: 20px 24px 60px; }
+            .shop-sidebar { width: 100%; position: static; }
+            .shop-sidebar { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
+            .sidebar-section { margin-bottom: 0; }
+            .shop-sidebar .clear-filters-btn { grid-column: 1 / -1; justify-self: start; }
+        }
+        @media (max-width: 600px) {
+            .shop-layout { padding: 16px 16px 48px; gap: 24px; }
+            .shop-sidebar { grid-template-columns: minmax(0, 1fr); gap: 20px; padding: 20px; }
+            .sidebar-section:first-child #category-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 12px; }
+            .filter-option { font-size: 13px; }
+            .shop-toolbar { align-items: stretch; gap: 12px; margin-bottom: 20px; }
+            .shop-search { max-width: none; flex-basis: 100%; }
+            .shop-toolbar > div:last-child { width: 100%; justify-content: space-between; }
+            .sort-select { max-width: 58%; }
+        }
+    </style>
+</head>
+<body>
+<!-- NAVBAR -->
+<header class="navbar" id="navbar">
+    <a href="../index.html" class="nav-logo" aria-label="ZIVO home"><span class="nav-logo-text">ZIVO</span><img class="nav-logo-image" src="../images/zivo-logo.svg?v=2" alt="ZIVO logo"></a>
+    <nav>
+        <ul class="nav-links">
+            <li><a href="../index.html">Home</a></li>
+            <li><a href="shop.html" class="active">Shop</a></li>
+            <li><a href="../index.html#about">About</a></li>
+            <li><a href="contact.html">Contact</a></li>
+        </ul>
+    </nav>
+    <div class="nav-actions">
+        <button class="nav-icon-btn" id="search-btn"><i class="fas fa-search"></i></button>
+        <button class="nav-icon-btn" id="cart-btn">
+            <i class="fas fa-shopping-bag"></i>
+            <span class="cart-count" id="cart-count">0</span>
+        </button>
+        <button class="nav-icon-btn" id="user-btn" onclick="handleUserClick()"><i class="fas fa-user"></i></button>
+        <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+    </div>
+</header>
+<nav class="mobile-nav" id="mobile-nav">
+    <a href="../index.html">Home</a>
+    <a href="shop.html">Shop</a>
+    <a href="login.html">Account</a>
+</nav>
+<div class="search-overlay" id="search-overlay">
+    <div class="search-overlay-inner">
+        <button class="search-close" id="search-close">×</button>
+        <input type="text" id="search-input" placeholder="Search products..." autocomplete="off">
+    </div>
+</div>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+    <div class="page-header-breadcrumb"><a href="../index.html">Home</a> <span>›</span> <span>Shop</span></div>
+    <h1 class="page-header-title" id="page-title">All Products</h1>
+    <p style="color:var(--text-muted);margin-top:10px;" id="page-sub">Discover our complete collection of premium footwear.</p>
+</div>
+
+<!-- SHOP LAYOUT -->
+<div class="shop-layout">
+    <!-- SIDEBAR -->
+    <aside class="shop-sidebar">
+        <div class="sidebar-section">
+            <p class="sidebar-title">Categories</p>
+            <div id="category-filters">
+                <div class="filter-option active" data-cat="All">
+                    <div class="filter-checkbox"></div>
+                    <span>All</span>
+                    <span class="filter-count" id="count-All">0</span>
+                </div>
+                <div class="filter-option" data-cat="Sneakers">
+                    <div class="filter-checkbox"></div>
+                    <span>Sneakers</span>
+                    <span class="filter-count" id="count-Sneakers">0</span>
+                </div>
+                <div class="filter-option" data-cat="Boots">
+                    <div class="filter-checkbox"></div>
+                    <span>Boots</span>
+                    <span class="filter-count" id="count-Boots">0</span>
+                </div>
+                <div class="filter-option" data-cat="Luxury">
+                    <div class="filter-checkbox"></div>
+                    <span>Luxury</span>
+                    <span class="filter-count" id="count-Luxury">0</span>
+                </div>
+                <div class="filter-option" data-cat="Sports">
+                    <div class="filter-checkbox"></div>
+                    <span>Sports</span>
+                    <span class="filter-count" id="count-Sports">0</span>
+                </div>
+                <div class="filter-option" data-cat="Casual">
+                    <div class="filter-checkbox"></div>
+                    <span>Casual</span>
+                    <span class="filter-count" id="count-Casual">0</span>
+                </div>
+                <div class="filter-option" data-cat="Limited">
+                    <div class="filter-checkbox"></div>
+                    <span>⚡ Limited</span>
+                    <span class="filter-count" id="count-Limited">0</span>
+                </div>
+            </div>
+        </div>
+        <div class="sidebar-section">
+            <p class="sidebar-title">Price Range</p>
+            <div class="price-inputs">
+                <input type="number" class="price-input" id="min-price" placeholder="Min $" min="0">
+                <input type="number" class="price-input" id="max-price" placeholder="Max $" min="0">
+            </div>
+            <button class="btn-primary" style="width:100%;margin-top:14px;padding:12px;font-size:14px;" onclick="applyPriceFilter()">
+                Apply Filter
+            </button>
+        </div>
+        <button class="clear-filters-btn" id="clear-filters" onclick="clearAllFilters()">
+            ✕ Clear All Filters
+        </button>
+    </aside>
+
+    <!-- MAIN GRID -->
+    <div class="shop-main">
+        <div class="shop-toolbar">
+            <div class="shop-search">
+                <i class="fas fa-search" style="color:var(--text-muted);font-size:14px;"></i>
+                <input type="text" id="search-keyword" placeholder="Search footwear..." autocomplete="off">
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                <span class="results-count" id="results-count"></span>
+                <select class="sort-select" id="sort-select">
+                    <option value="newest">Newest First</option>
+                    <option value="price_asc">Price: Low to High</option>
+                    <option value="price_desc">Price: High to Low</option>
+                    <option value="rating">Top Rated</option>
+                </select>
+            </div>
+        </div>
+        <div class="products-grid" id="products-grid">
+            <div class="skeleton skeleton-card"></div>
+            <div class="skeleton skeleton-card"></div>
+            <div class="skeleton skeleton-card"></div>
+            <div class="skeleton skeleton-card"></div>
+            <div class="skeleton skeleton-card"></div>
+            <div class="skeleton skeleton-card"></div>
+        </div>
+        <div class="pagination" id="pagination"></div>
+    </div>
+</div>
+
+<!-- CART SIDEBAR -->
+<div class="cart-overlay" id="cart-overlay"></div>
+<aside class="cart-sidebar" id="cart-sidebar">
+    <div class="cart-header">
+        <h2 class="cart-title">Your Cart</h2>
+        <button class="cart-close" id="cart-close">×</button>
+    </div>
+    <div class="cart-empty" id="cart-empty" style="display:flex;">
+        <div class="cart-empty-icon">🛒</div><p>Your cart is empty</p>
+        <a href="shop.html" class="btn-primary" style="margin-top:10px;font-size:14px;padding:12px 24px;">Start Shopping</a>
+    </div>
+    <div class="cart-items" id="cart-items"></div>
+    <div class="cart-footer" id="cart-footer" style="display:none;">
+        <div class="cart-subtotal"><span>Subtotal</span><span id="cart-subtotal-val">$0.00</span></div>
+        <div class="cart-subtotal"><span>Shipping</span><span id="cart-shipping-val">$0.00</span></div>
+        <div class="cart-total"><span>Total</span><span class="cart-total-amount" id="cart-total-val">$0.00</span></div>
+        <a href="checkout.html" class="btn-primary" style="width:100%;justify-content:center;text-decoration:none;">Checkout <i class="fas fa-arrow-right"></i></a>
+        <a href="cart.html" class="btn-outline" style="width:100%;justify-content:center;margin-top:10px;font-size:14px;padding:12px;text-decoration:none;">View Cart</a>
+    </div>
+</aside>
+
+<script src="../js/utils.js"></script>
+<script src="../js/cart.js"></script>
+<script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+<script>
+AOS.init({ duration: 600, once: true });
+
+let currentPage = 1;
+let currentCategory = 'All';
+let currentSort = 'newest';
+let currentKeyword = '';
+let minPrice = '';
+let maxPrice = '';
+let debounceTimer;
+
+// Read URL params
+const params = new URLSearchParams(window.location.search);
+if (params.get('category')) {
+    currentCategory = params.get('category');
+    setActiveCategory(currentCategory);
+    document.getElementById('page-title').textContent = currentCategory + ' Collection';
+}
+if (params.get('keyword')) {
+    currentKeyword = params.get('keyword');
+    document.getElementById('search-keyword').value = currentKeyword;
+}
+
+async function fetchProducts() {
+    const grid = document.getElementById('products-grid');
+    grid.innerHTML = '<div class="skeleton skeleton-card"></div>'.repeat(6);
+
+    let url = `${API_BASE}/products?page=${currentPage}&sort=${currentSort}`;
+    if (currentCategory !== 'All') url += `&category=${encodeURIComponent(currentCategory)}`;
+    if (currentKeyword) url += `&keyword=${encodeURIComponent(currentKeyword)}`;
+    if (minPrice) url += `&minPrice=${minPrice}`;
+    if (maxPrice) url += `&maxPrice=${maxPrice}`;
+
+    try {
+        const data = await fetch(url).then(r => r.json());
+        const { products, total, pages } = data;
+
+        document.getElementById('results-count').textContent = `${total || 0} products`;
+
+        if (!products || products.length === 0) {
+            grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 0;color:var(--text-muted);">
+                <div style="font-size:48px;margin-bottom:16px;">👟</div>
+                <p style="font-size:18px;">No products found for your filters.</p>
+                <button onclick="clearAllFilters()" class="btn-outline" style="margin-top:20px;padding:12px 24px;font-size:14px;">Clear Filters</button>
+            </div>`;
+            document.getElementById('pagination').innerHTML = '';
+            return;
+        }
+
+        grid.innerHTML = products.map(p => renderProductCard(p)).join('');
+        renderPagination(pages);
+        updateCategoryCounts();
+    } catch(e) {
+        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 0;color:var(--text-muted);">
+            <div style="font-size:48px;margin-bottom:16px;">⚡</div>
+            <p style="font-size:18px;">Could not connect to server.</p>
+            <p style="margin-top:8px;font-size:14px;">Make sure the backend is running: <code style="color:var(--accent);">node server.js</code></p>
+        </div>`;
+    }
+}
+
+function renderProductCard(p) {
+    const discount = p.originalPrice > p.price ? Math.round(100 - (p.price / p.originalPrice * 100)) : 0;
+    return `
+    <div class="product-card" onclick="window.location='product.html?id=${p._id}'">
+        <div class="product-card-image">
+            <img src="${normalizeImageUrl(p.image)}" alt="${p.name}" loading="lazy" onerror="this.onerror=null;this.src='../images/product-image-placeholder.svg'">
+            <div class="product-badges">
+                ${p.isNewArrival ? '<span class="badge badge-new">New</span>' : ''}
+                ${p.category === 'Limited' ? '<span class="badge badge-limited">Limited</span>' : ''}
+                ${discount > 0 ? `<span class="badge badge-sale">-${discount}%</span>` : ''}
+            </div>
+            <div class="product-card-actions">
+                <button class="product-action-btn" onclick="event.stopPropagation();quickAdd(${JSON.stringify(p).replace(/"/g, '&quot;')})" title="Quick Add">🛒</button>
+            </div>
+        </div>
+        <div class="product-card-body">
+            <p class="product-card-category">${p.category}</p>
+            <h3 class="product-card-name">${p.name}</h3>
+            <div class="product-card-rating">
+                <span class="stars">${'★'.repeat(Math.round(p.rating||0))}${'☆'.repeat(5-Math.round(p.rating||0))}</span>
+                <span class="rating-count">(${p.numReviews||0})</span>
+            </div>
+            <div class="product-card-footer">
+                <div class="product-card-price">
+                    <span class="price-current">$${p.price}</span>
+                    ${p.originalPrice > p.price ? `<span class="price-original">$${p.originalPrice}</span>` : ''}
+                </div>
+                <button class="btn-add-cart" onclick="event.stopPropagation();quickAdd(${JSON.stringify(p).replace(/"/g, '&quot;')})">Add</button>
+            </div>
+        </div>
+    </div>`;
+}
+
+function quickAdd(product) {
+    Cart.addItem(product, 1, '');
+    document.getElementById('cart-btn').click();
+}
+
+function renderPagination(pages) {
+    const pg = document.getElementById('pagination');
+    if (pages <= 1) { pg.innerHTML = ''; return; }
+    let html = '';
+    if (currentPage > 1) html += `<button class="page-btn" onclick="goPage(${currentPage-1})"><i class="fas fa-chevron-left"></i></button>`;
+    for (let i = 1; i <= pages; i++) {
+        html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goPage(${i})">${i}</button>`;
+    }
+    if (currentPage < pages) html += `<button class="page-btn" onclick="goPage(${currentPage+1})"><i class="fas fa-chevron-right"></i></button>`;
+    pg.innerHTML = html;
+}
+
+function goPage(p) {
+    currentPage = p;
+    fetchProducts();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function updateCategoryCounts() {
+    try {
+        const res = await fetch(`${API_BASE}/products?pageSize=1000`);
+        const data = await res.json();
+        const cats = ['All', 'Sneakers', 'Boots', 'Luxury', 'Sports', 'Casual', 'Limited'];
+        cats.forEach(cat => {
+            const el = document.getElementById('count-' + cat);
+            if (!el) return;
+            if (cat === 'All') el.textContent = data.total;
+            else el.textContent = data.products.filter(p => p.category === cat).length;
+        });
+    } catch(e) {}
+}
+
+function setActiveCategory(cat) {
+    document.querySelectorAll('[data-cat]').forEach(el => {
+        el.classList.toggle('active', el.dataset.cat === cat);
+    });
+}
+
+document.querySelectorAll('[data-cat]').forEach(el => {
+    el.addEventListener('click', () => {
+        currentCategory = el.dataset.cat;
+        currentPage = 1;
+        setActiveCategory(currentCategory);
+        document.getElementById('clear-filters').classList.toggle('visible', currentCategory !== 'All' || currentKeyword || minPrice || maxPrice);
+        fetchProducts();
+    });
+});
+
+document.getElementById('sort-select').addEventListener('change', (e) => {
+    currentSort = e.target.value;
+    currentPage = 1;
+    fetchProducts();
+});
+
+document.getElementById('search-keyword').addEventListener('input', (e) => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+        currentKeyword = e.target.value.trim();
+        currentPage = 1;
+        document.getElementById('clear-filters').classList.toggle('visible', currentCategory !== 'All' || currentKeyword || minPrice || maxPrice);
+        fetchProducts();
+    }, 400);
+});
+
+function applyPriceFilter() {
+    minPrice = document.getElementById('min-price').value;
+    maxPrice = document.getElementById('max-price').value;
+    currentPage = 1;
+    document.getElementById('clear-filters').classList.toggle('visible', currentCategory !== 'All' || currentKeyword || minPrice || maxPrice);
+    fetchProducts();
+}
+
+function clearAllFilters() {
+    currentCategory = 'All';
+    currentKeyword = '';
+    minPrice = '';
+    maxPrice = '';
+    currentPage = 1;
+    setActiveCategory('All');
+    document.getElementById('search-keyword').value = '';
+    document.getElementById('min-price').value = '';
+    document.getElementById('max-price').value = '';
+    document.getElementById('clear-filters').classList.remove('visible');
+    fetchProducts();
+}
+
+function handleUserClick() {
+    if (Auth.isLoggedIn()) {
+        window.location.href = Auth.isAdmin() ? '../admin/index.html' : 'orders.html';
+    } else {
+        window.location.href = 'login.html';
+    }
+}
+
+fetchProducts();
+</script>
+</body>
+</html>

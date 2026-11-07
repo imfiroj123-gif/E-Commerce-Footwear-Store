@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZIVO | About Us</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
+    <style>
+        .about-hero { height: 70vh; margin-top: var(--nav-height); display: flex; align-items: center; justify-content: center; text-align: center; position: relative; overflow: hidden; background: var(--bg-primary); }
+        .about-hero-bg { position: absolute; inset: 0; background-image: url('https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=1600'); background-size: cover; background-position: center; opacity: 0.08; }
+        .about-hero-gradient { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 50%, rgba(232,50,90,0.1) 0%, transparent 70%); }
+        .about-hero-content { position: relative; z-index: 2; max-width: 700px; padding: 0 24px; }
+        .about-story { padding: 100px 60px; display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
+        .about-story-img { border-radius: 20px; overflow: hidden; aspect-ratio: 4/3; }
+        .about-story-img img { width: 100%; height: 100%; object-fit: cover; }
+        .about-values { padding: 80px 60px; background: var(--bg-secondary); }
+        .values-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 28px; margin-top: 48px; }
+        .value-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 36px 28px; transition: transform 0.3s, border-color 0.3s; }
+        .value-card:hover { transform: translateY(-6px); border-color: var(--accent); }
+        .value-icon { font-size: 40px; margin-bottom: 20px; }
+        .value-title { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+        .value-desc { color: var(--text-muted); font-size: 15px; line-height: 1.7; }
+        .about-team { padding: 80px 60px; }
+        .team-grid { display: grid; grid-template-columns: minmax(0,280px); justify-content: center; gap: 28px; margin-top: 48px; }
+        .team-card { text-align: center; }
+        .team-avatar { width: 120px; height: 120px; border-radius: 50%; margin: 0 auto 16px; overflow: hidden; background: var(--surface); border: 3px solid var(--border); }
+        .team-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .team-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+        .team-role { font-size: 13px; color: var(--accent); }
+        @media(max-width:900px){ .about-story{grid-template-columns:1fr;padding:60px 24px;gap:40px;} .values-grid{grid-template-columns:repeat(2,minmax(0,1fr));} .about-values,.about-team{padding:60px 24px;} }
+        @media(max-width:600px){
+            .about-hero{height:auto;min-height:70svh;padding:24px 0 56px;}
+            .about-story{padding:48px 20px;gap:28px;}
+            .about-values,.about-team{padding:48px 20px;}
+            .values-grid{grid-template-columns:1fr;gap:16px;margin-top:32px;}
+            .team-grid{gap:28px 16px;margin-top:32px;}
+            .value-card{padding:28px 22px;}
+            .team-avatar{width:96px;height:96px;}
+        }
+    </style>
+</head>
+<body>
+<header class="navbar" id="navbar">
+    <a href="../index.html" class="nav-logo" aria-label="ZIVO home"><span class="nav-logo-text">ZIVO</span><img class="nav-logo-image" src="../images/zivo-logo.svg?v=2" alt="ZIVO logo"></a>
+    <nav><ul class="nav-links">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="shop.html">Shop</a></li>
+        <li><a href="about.html" class="active">About</a></li>
+        <li><a href="contact.html">Contact</a></li>
+    </ul></nav>
+    <div class="nav-actions">
+        <button class="nav-icon-btn" id="search-btn"><i class="fas fa-search"></i></button>
+        <button class="nav-icon-btn" id="cart-btn"><i class="fas fa-shopping-bag"></i><span class="cart-count" id="cart-count">0</span></button>
+        <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+    </div>
+</header>
+<nav class="mobile-nav" id="mobile-nav"><a href="../index.html">Home</a><a href="shop.html">Shop</a><a href="about.html">About</a></nav>
+<div class="search-overlay" id="search-overlay"><div class="search-overlay-inner"><button class="search-close" id="search-close">×</button><input type="text" id="search-input" placeholder="Search..."></div></div>
+
+<section class="about-hero">
+    <div class="about-hero-bg"></div>
+    <div class="about-hero-gradient"></div>
+    <div class="about-hero-content">
+        <p class="section-tag" style="justify-content:center;" data-aos="fade-up">Est. 2021</p>
+        <h1 class="hero-title" data-aos="fade-up" data-aos-delay="100">
+            <span class="line"><span class="word">Crafted With</span></span>
+            <span class="line"><span class="accent-word">Purpose.</span></span>
+        </h1>
+        <p class="hero-subtitle" data-aos="fade-up" data-aos-delay="200">We believe every step tells a story. ZIVO was born from a passion for footwear that's as unique as the people who wear it.</p>
+    </div>
+</section>
+
+<section class="about-story">
+    <div data-aos="fade-right">
+        <p class="section-tag">Our Story</p>
+        <h2 class="section-title" style="margin-bottom:24px;">From Passion<br>to Premium</h2>
+        <p style="color:var(--text-muted);font-size:16px;line-height:1.9;margin-bottom:20px;">ZIVO began in a small workshop with a single vision — to create footwear that bridges the gap between luxury craftsmanship and everyday wearability. What started as a passion project in 2021 has grown into a globally recognized premium footwear brand.</p>
+        <p style="color:var(--text-muted);font-size:16px;line-height:1.9;margin-bottom:32px;">Each ZIVO shoe is a collaboration between master craftsmen, avant-garde designers, and materials scientists who push the boundaries of what footwear can be. We don't just make shoes — we engineer experiences.</p>
+        <a href="shop.html" class="btn-primary" style="display:inline-flex;gap:8px;"><i class="fas fa-store"></i> Explore Collection</a>
+    </div>
+    <div class="about-story-img" data-aos="fade-left">
+        <img src="https://images.unsplash.com/photo-1556906781-9a412961a28c?auto=format&fit=crop&q=80&w=800" alt="ZIVO Workshop">
+    </div>
+</section>
+
+<section class="about-values">
+    <div style="text-align:center;" data-aos="fade-up">
+        <p class="section-tag" style="justify-content:center;">What We Stand For</p>
+        <h2 class="section-title">Our Core Values</h2>
+    </div>
+    <div class="values-grid">
+        <div class="value-card" data-aos="fade-up" data-aos-delay="0">
+            <div class="value-icon">🎨</div>
+            <h3 class="value-title">Design Excellence</h3>
+            <p class="value-desc">Every silhouette, every stitch, every material choice is a deliberate design decision. We obsess over details so you don't have to.</p>
+        </div>
+        <div class="value-card" data-aos="fade-up" data-aos-delay="100">
+            <div class="value-icon">🌿</div>
+            <h3 class="value-title">Sustainability</h3>
+            <p class="value-desc">We source materials responsibly, minimize waste in production, and partner with certified ethical manufacturers worldwide.</p>
+        </div>
+        <div class="value-card" data-aos="fade-up" data-aos-delay="200">
+            <div class="value-icon">🔬</div>
+            <h3 class="value-title">Innovation</h3>
+            <p class="value-desc">Our R&D team constantly experiments with new materials and technologies. From carbon fiber plates to memory foam insoles, we push limits.</p>
+        </div>
+        <div class="value-card" data-aos="fade-up" data-aos-delay="0">
+            <div class="value-icon">🤝</div>
+            <h3 class="value-title">Community</h3>
+            <p class="value-desc">ZIVO is more than a brand — it's a community of individuals who celebrate self-expression through the art of footwear.</p>
+        </div>
+        <div class="value-card" data-aos="fade-up" data-aos-delay="100">
+            <div class="value-icon">💎</div>
+            <h3 class="value-title">Premium Quality</h3>
+            <p class="value-desc">We refuse to cut corners. Every pair undergoes 47-point quality inspection before leaving our facility. Perfection isn't optional.</p>
+        </div>
+        <div class="value-card" data-aos="fade-up" data-aos-delay="200">
+            <div class="value-icon">🌍</div>
+            <h3 class="value-title">Global Impact</h3>
+            <p class="value-desc">With shipping to 50+ countries and partnerships with local artisans, ZIVO is a truly global community united by great footwear.</p>
+        </div>
+    </div>
+</section>
+
+<section class="about-team">
+    <div style="text-align:center;" data-aos="fade-up">
+        <p class="section-tag" style="justify-content:center;">The People</p>
+        <h2 class="section-title">Meet the Founder</h2>
+        <p class="section-subtitle" style="margin:12px auto 0;text-align:center;">A vision for exceptional footwear, brought to life by our founder.</p>
+    </div>
+    <div class="team-grid">
+        <div class="team-card" data-aos="fade-up" data-aos-delay="0">
+            <div class="team-avatar"><img src="../images/founder-firoj-khan.png" alt="Firoj Khan, Founder and CEO"></div>
+            <p class="team-name">Firoj Khan</p>
+            <p class="team-role">Founder & CEO</p>
+        </div>
+    </div>
+</section>
+
+<section class="features-grid">
+    <div class="feature-item" data-aos="fade-up">
+        <div class="feature-icon">🏭</div>
+        <div><h3 class="feature-title">Own Manufacturing</h3><p class="feature-desc">Full control over quality from raw material to finished product.</p></div>
+    </div>
+    <div class="feature-item" data-aos="fade-up" data-aos-delay="100">
+        <div class="feature-icon">🌐</div>
+        <div><h3 class="feature-title">50+ Countries</h3><p class="feature-desc">Delivering premium footwear to customers around the globe.</p></div>
+    </div>
+    <div class="feature-item" data-aos="fade-up" data-aos-delay="200">
+        <div class="feature-icon">⭐</div>
+        <div><h3 class="feature-title">4.9/5 Rating</h3><p class="feature-desc">Trusted by 50,000+ satisfied customers worldwide.</p></div>
+    </div>
+    <div class="feature-item" data-aos="fade-up" data-aos-delay="300">
+        <div class="feature-icon">🏆</div>
+        <div><h3 class="feature-title">Award Winning</h3><p class="feature-desc">Best Footwear Brand 2025 — India Luxury Awards.</p></div>
+    </div>
+</section>
+
+<section class="newsletter-section">
+    <p class="section-tag" style="justify-content:center;">Stay Connected</p>
+    <h2 class="section-title">Join the ZIVO Family</h2>
+    <p style="color:var(--text-muted);margin-top:8px;">Be part of our community and get exclusive access to new drops.</p>
+    <form class="newsletter-form" style="margin-top:32px;" onsubmit="sub(event)">
+        <input type="email" class="newsletter-input" placeholder="Your email address" required>
+        <button type="submit" class="newsletter-btn">Subscribe</button>
+    </form>
+</section>
+
+<footer class="footer">
+    <div style="text-align:center;padding-bottom:40px;border-bottom:1px solid var(--border);">
+        <div class="footer-brand-name" style="margin-bottom:16px;">ZIVO</div>
+        <p class="footer-brand-desc" style="margin:0 auto;">Premium footwear for those who refuse to compromise.</p>
+        <div class="footer-social" style="justify-content:center;margin-top:24px;">
+            <a href="#" class="social-btn"><i class="fab fa-instagram"></i></a>
+            <a href="#" class="social-btn"><i class="fab fa-twitter"></i></a>
+            <a href="#" class="social-btn"><i class="fab fa-pinterest"></i></a>
+        </div>
+    </div>
+    <div class="footer-bottom" style="margin-top:40px;"><p>© 2026 ZIVO Premium Footwear.</p><div class="footer-bottom-links"><a href="#">Privacy</a><a href="#">Terms</a></div></div>
+</footer>
+
+<script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/cart.js"></script>
+<script>
+AOS.init({ duration: 800, once: true });
+function sub(e) { e.preventDefault(); showToast("You're subscribed! ✨", 'success'); e.target.reset(); }
+</script>
+</body>
+</html>

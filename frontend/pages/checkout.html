@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZIVO | Checkout</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .checkout-page { padding: 120px 60px 80px; display: grid; grid-template-columns: 1fr 380px; gap: 48px; align-items: flex-start; }
+        .steps { display: flex; gap: 0; margin-bottom: 40px; }
+        .step { display: flex; align-items: center; gap: 12px; flex: 1; }
+        .step-num { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; transition: all 0.3s; }
+        .step.active .step-num { background: var(--accent); border-color: var(--accent); color: white; }
+        .step.done .step-num { background: #22c55e; border-color: #22c55e; color: white; }
+        .step-label { font-size: 13px; font-weight: 500; color: var(--text-muted); }
+        .step.active .step-label { color: var(--text-primary); }
+        .step-connector { flex: 1; height: 2px; background: var(--border); margin: 0 8px; }
+        .step.done ~ .step-connector, .step.done + * .step-connector { background: #22c55e; }
+        .step-panel { display: none; }
+        .step-panel.active { display: block; }
+        .section-heading { font-size: 22px; font-weight: 700; margin-bottom: 28px; display: flex; align-items: center; gap: 12px; }
+        .section-heading i { color: var(--accent); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .order-summary-mini { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 28px; position: sticky; top: 100px; }
+        .mini-item { display: flex; gap: 14px; margin-bottom: 16px; align-items: flex-start; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+        .mini-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .mini-img { width: 64px; height: 64px; border-radius: 10px; object-fit: cover; background: var(--bg-tertiary); flex-shrink: 0; }
+        .mini-name { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .mini-meta { font-size: 12px; color: var(--text-muted); }
+        .mini-price { margin-left: auto; font-size: 15px; font-weight: 700; white-space: nowrap; }
+        .payment-method { display: flex; flex-direction: column; gap: 14px; }
+        .payment-option { display: flex; align-items: center; gap: 16px; padding: 18px 20px; border: 1.5px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.3s; }
+        .payment-option:hover { border-color: var(--accent); }
+        .payment-option.selected { border-color: var(--accent); background: var(--accent-glow); }
+        .payment-radio { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; }
+        .payment-option.selected .payment-radio { border-color: var(--accent); background: var(--accent); }
+        .payment-option.selected .payment-radio::after { content: ''; width: 8px; height: 8px; background: white; border-radius: 50%; }
+        .success-screen { text-align: center; padding: 60px 0; }
+        .success-icon { font-size: 80px; margin-bottom: 24px; animation: floatUp 3s ease-in-out infinite; }
+        @media(max-width:900px){ .checkout-page{grid-template-columns:1fr;padding:120px 24px 60px;gap:32px;} .order-summary-mini{position:static;} }
+        @media(max-width:600px){
+            .checkout-page{padding:104px 16px 48px;gap:28px;}
+            .steps{margin-bottom:30px;}
+            .step{gap:7px;}
+            .step-num{width:30px;height:30px;font-size:12px;}
+            .step-label{font-size:11px;}
+            .step-connector{margin:0 5px;}
+            .section-heading{font-size:19px;margin-bottom:22px;}
+            .form-row{grid-template-columns:1fr;}
+            .order-summary-mini{padding:20px;}
+            .payment-option{padding:15px;gap:12px;}
+            .success-screen{padding:40px 0;}
+            .success-icon{font-size:64px;}
+        }
+    </style>
+</head>
+<body>
+<header class="navbar" id="navbar">
+    <a href="../index.html" class="nav-logo" aria-label="ZIVO home"><span class="nav-logo-text">ZIVO</span><img class="nav-logo-image" src="../images/zivo-logo.svg?v=2" alt="ZIVO logo"></a>
+    <nav><ul class="nav-links"><li><a href="../index.html">Home</a></li><li><a href="shop.html">Shop</a></li></ul></nav>
+    <div class="nav-actions">
+        <button class="nav-icon-btn" id="search-btn"><i class="fas fa-search"></i></button>
+        <button class="nav-icon-btn" id="cart-btn"><i class="fas fa-shopping-bag"></i><span class="cart-count" id="cart-count">0</span></button>
+        <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+    </div>
+</header>
+<nav class="mobile-nav" id="mobile-nav"><a href="../index.html">Home</a><a href="shop.html">Shop</a></nav>
+<div class="search-overlay" id="search-overlay"><div class="search-overlay-inner"><button class="search-close" id="search-close">×</button><input type="text" id="search-input" placeholder="Search..."></div></div>
+
+<div class="checkout-page">
+    <div>
+        <!-- Steps -->
+        <div class="steps" id="steps">
+            <div class="step active" id="step-1"><div class="step-num">1</div><div class="step-label">Shipping</div></div>
+            <div class="step-connector"></div>
+            <div class="step" id="step-2"><div class="step-num">2</div><div class="step-label">Payment</div></div>
+            <div class="step-connector"></div>
+            <div class="step" id="step-3"><div class="step-num">3</div><div class="step-label">Confirm</div></div>
+        </div>
+
+        <!-- Panel 1: Shipping -->
+        <div class="step-panel active" id="panel-1">
+            <div class="section-heading"><i class="fas fa-map-marker-alt"></i> Shipping Address</div>
+            <div class="form-row">
+                <div class="form-group"><label class="form-label">First Name</label><input type="text" id="firstName" class="form-input" placeholder="John" required></div>
+                <div class="form-group"><label class="form-label">Last Name</label><input type="text" id="lastName" class="form-input" placeholder="Doe" required></div>
+            </div>
+            <div class="form-group"><label class="form-label">Street Address</label><input type="text" id="address" class="form-input" placeholder="123 Main Street, Apt 4B" required></div>
+            <div class="form-row">
+                <div class="form-group"><label class="form-label">City</label><input type="text" id="city" class="form-input" placeholder="Mumbai" required></div>
+                <div class="form-group"><label class="form-label">Postal Code</label><input type="text" id="postalCode" class="form-input" placeholder="400001" required></div>
+            </div>
+            <div class="form-group"><label class="form-label">Country</label>
+                <select id="country" class="form-select">
+                    <option>India</option><option>United States</option><option>United Kingdom</option><option>Canada</option><option>Australia</option><option>UAE</option>
+                </select>
+            </div>
+            <div class="form-group"><label class="form-label">Phone Number</label><input type="tel" id="phone" class="form-input" placeholder="+91 98765 43210"></div>
+            <button class="btn-primary" style="padding:18px 40px;font-size:16px;margin-top:12px;" onclick="goToPayment()">
+                Continue to Payment <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+
+        <!-- Panel 2: Payment -->
+        <div class="step-panel" id="panel-2">
+            <div class="section-heading"><i class="fas fa-credit-card"></i> Payment Method</div>
+            <div class="payment-method" id="payment-options">
+                <div class="payment-option selected" onclick="selectPayment(this,'cod')">
+                    <div class="payment-radio"></div>
+                    <span style="font-size:22px;">💵</span>
+                    <div><p style="font-weight:600;">Cash on Delivery</p><p style="font-size:13px;color:var(--text-muted);">Pay when your order arrives</p></div>
+                </div>
+                <div class="payment-option" onclick="selectPayment(this,'card')">
+                    <div class="payment-radio"></div>
+                    <span style="font-size:22px;">💳</span>
+                    <div><p style="font-weight:600;">Credit / Debit Card</p><p style="font-size:13px;color:var(--text-muted);">Visa, Mastercard, RuPay</p></div>
+                </div>
+                <div class="payment-option" onclick="selectPayment(this,'upi')">
+                    <div class="payment-radio"></div>
+                    <span style="font-size:22px;">📱</span>
+                    <div><p style="font-weight:600;">UPI / GPay / PhonePe</p><p style="font-size:13px;color:var(--text-muted);">Instant payment via UPI</p></div>
+                </div>
+            </div>
+            <div style="display:flex;gap:14px;margin-top:32px;">
+                <button class="btn-outline" onclick="goStep(1)" style="padding:16px 28px;">← Back</button>
+                <button class="btn-primary" onclick="goToReview()" style="padding:16px 32px;font-size:16px;">Review Order <i class="fas fa-arrow-right"></i></button>
+            </div>
+        </div>
+
+        <!-- Panel 3: Confirm -->
+        <div class="step-panel" id="panel-3">
+            <div class="section-heading"><i class="fas fa-clipboard-check"></i> Order Review</div>
+            <div id="review-content" style="background:var(--surface);border-radius:16px;padding:28px;border:1px solid var(--border);margin-bottom:24px;"></div>
+            <div style="display:flex;gap:14px;">
+                <button class="btn-outline" onclick="goStep(2)" style="padding:16px 28px;">← Back</button>
+                <button class="btn-primary" onclick="placeOrder()" id="place-order-btn" style="flex:1;justify-content:center;padding:18px;font-size:16px;">
+                    <i class="fas fa-lock"></i> Place Order
+                </button>
+            </div>
+        </div>
+
+        <!-- Success -->
+        <div class="step-panel" id="panel-success">
+            <div class="success-screen">
+                <div class="success-icon">🎉</div>
+                <h2 style="font-family:var(--font-display);font-size:36px;margin-bottom:12px;">Order Placed!</h2>
+                <p style="color:var(--text-muted);font-size:16px;margin-bottom:32px;">Thank you for your purchase. Your order is being processed.</p>
+                <div id="order-id-display" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:32px;font-size:14px;color:var(--text-muted);"></div>
+                <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+                    <a href="orders.html" class="btn-primary" style="display:inline-flex;gap:8px;"><i class="fas fa-box"></i> View My Orders</a>
+                    <a href="shop.html" class="btn-outline" style="display:inline-flex;gap:8px;">Continue Shopping</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Summary -->
+    <div class="order-summary-mini">
+        <h3 style="font-size:18px;font-weight:700;margin-bottom:24px;padding-bottom:18px;border-bottom:1px solid var(--border);">Order Summary</h3>
+        <div id="checkout-items"></div>
+        <div style="border-top:1px solid var(--border);padding-top:20px;margin-top:4px;">
+            <div class="summary-row" style="display:flex;justify-content:space-between;font-size:14px;color:var(--text-muted);margin-bottom:8px;"><span>Subtotal</span><span id="cs-sub"></span></div>
+            <div class="summary-row" style="display:flex;justify-content:space-between;font-size:14px;color:var(--text-muted);margin-bottom:8px;"><span>Shipping</span><span id="cs-ship"></span></div>
+            <div class="summary-row" style="display:flex;justify-content:space-between;font-size:14px;color:var(--text-muted);margin-bottom:8px;"><span>Tax (18%)</span><span id="cs-tax"></span></div>
+            <div style="display:flex;justify-content:space-between;font-size:22px;font-weight:800;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+                <span>Total</span><span style="color:var(--accent);" id="cs-total"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="../js/utils.js"></script>
+<script src="../js/cart.js"></script>
+<script>
+let selectedPayment = 'cod';
+let shippingData = {};
+
+// Redirect if cart empty
+if (Cart.getItems().length === 0) window.location.href = 'cart.html';
+if (!Auth.isLoggedIn()) window.location.href = 'login.html?redirect=checkout';
+
+renderSummary();
+
+function renderSummary() {
+    const items = Cart.getItems();
+    document.getElementById('checkout-items').innerHTML = items.map(i => `
+        <div class="mini-item">
+            <img src="${normalizeImageUrl(i.image)}" class="mini-img" alt="${i.name}" onerror="this.onerror=null;this.src='../images/product-image-placeholder.svg'">
+            <div><p class="mini-name">${i.name}</p><p class="mini-meta">Qty: ${i.qty}${i.size?' · '+i.size:''}</p></div>
+            <span class="mini-price">$${(i.price*i.qty).toFixed(2)}</span>
+        </div>`).join('');
+    document.getElementById('cs-sub').textContent = '$'+Cart.getSubtotal().toFixed(2);
+    document.getElementById('cs-ship').textContent = Cart.getShipping()===0?'FREE':'$'+Cart.getShipping().toFixed(2);
+    document.getElementById('cs-tax').textContent = '$'+Cart.getTax().toFixed(2);
+    document.getElementById('cs-total').textContent = '$'+Cart.getTotal().toFixed(2);
+}
+
+function goStep(n) {
+    document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-'+n).classList.add('active');
+    [1,2,3].forEach(i => {
+        const s = document.getElementById('step-'+i);
+        s.classList.remove('active','done');
+        if (i < n) s.classList.add('done');
+        if (i === n) s.classList.add('active');
+    });
+}
+
+function goToPayment() {
+    const addr = document.getElementById('address').value;
+    const city = document.getElementById('city').value;
+    const postal = document.getElementById('postalCode').value;
+    if (!addr || !city || !postal) { showToast('Please fill all required fields', 'warning'); return; }
+    shippingData = {
+        address: document.getElementById('address').value,
+        city: document.getElementById('city').value,
+        postalCode: document.getElementById('postalCode').value,
+        country: document.getElementById('country').value,
+    };
+    goStep(2);
+}
+
+function selectPayment(el, method) {
+    document.querySelectorAll('.payment-option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedPayment = method;
+}
+
+function goToReview() {
+    const methods = {'cod':'💵 Cash on Delivery','card':'💳 Card Payment','upi':'📱 UPI Payment'};
+    document.getElementById('review-content').innerHTML = `
+        <h4 style="margin-bottom:18px;color:var(--text-muted);font-size:13px;letter-spacing:1px;text-transform:uppercase;">Shipping To</h4>
+        <p style="font-size:16px;line-height:1.7;">${shippingData.address}<br>${shippingData.city}, ${shippingData.postalCode}<br>${shippingData.country}</p>
+        <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border);">
+            <h4 style="margin-bottom:10px;color:var(--text-muted);font-size:13px;letter-spacing:1px;text-transform:uppercase;">Payment</h4>
+            <p style="font-size:16px;">${methods[selectedPayment]||selectedPayment}</p>
+        </div>`;
+    goStep(3);
+}
+
+async function placeOrder() {
+    const btn = document.getElementById('place-order-btn');
+    btn.innerHTML = '<div class="spinner" style="width:24px;height:24px;border-width:2px;margin:auto;"></div>';
+    btn.disabled = true;
+    try {
+        const order = await authFetch(`${API_BASE}/orders`, {
+            method: 'POST',
+            body: JSON.stringify({
+                orderItems: Cart.toOrderItems(),
+                shippingAddress: shippingData,
+                paymentMethod: selectedPayment,
+                taxPrice: Cart.getTax(),
+                shippingPrice: Cart.getShipping(),
+                totalPrice: Cart.getTotal(),
+            }),
+        });
+        if (selectedPayment === 'cod') {
+            await authFetch(`${API_BASE}/orders/${order._id}/pay`, { method: 'PUT', body: JSON.stringify({ status: 'COD_PENDING' }) }).catch(()=>{});
+        }
+        Cart.clear();
+        document.querySelector('.steps').style.display = 'none';
+        document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+        document.getElementById('panel-success').classList.add('active');
+        document.getElementById('order-id-display').innerHTML = `Order ID: <strong style="color:var(--accent);">#${order._id.slice(-8).toUpperCase()}</strong><br><span style="margin-top:4px;display:block;">Estimated delivery: 3–5 business days</span>`;
+    } catch(e) {
+        showToast('Order failed: ' + e.message, 'error');
+        btn.innerHTML = '<i class="fas fa-lock"></i> Place Order';
+        btn.disabled = false;
+    }
+}
+</script>
+</body>
+</html>

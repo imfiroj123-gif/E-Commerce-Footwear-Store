@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZIVO Admin | Products</title>
+    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<div class="admin-layout">
+    <aside class="sidebar">
+        <div class="sidebar-header"><div class="sidebar-logo">ZIVO</div><div class="sidebar-badge">Admin Portal</div></div>
+        <nav class="sidebar-nav">
+            <div class="nav-group-label">Main</div>
+            <a class="nav-item" href="../dashboard/index.html"><span class="nav-icon">📊</span> Dashboard</a>
+            <a class="nav-item active" href="index.html"><span class="nav-icon">👟</span> Products</a>
+            <a class="nav-item" href="../orders/index.html"><span class="nav-icon">📦</span> Orders</a>
+            <div class="nav-group-label">Settings</div>
+            <a class="nav-item" href="../../index.html"><span class="nav-icon">🏠</span> View Store</a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="sidebar-user">
+                <div class="sidebar-user-avatar" id="sidebar-user-avatar">A</div>
+                <div><div class="sidebar-user-name" id="sidebar-user-name">Admin</div><div class="sidebar-user-role">Super Admin</div></div>
+                <button class="sidebar-logout" onclick="Auth.logout()">Out</button>
+            </div>
+        </div>
+    </aside>
+    <div class="main-content">
+        <header class="top-header">
+            <div class="header-left"><button class="hamburger-admin">☰</button><div class="page-breadcrumb">Products / <span>All Products</span></div></div>
+            <div class="header-right">
+                <input class="header-search" id="search-input" placeholder="Search products..." oninput="debouncedSearch()">
+                <a href="edit.html" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Add Product</a>
+            </div>
+        </header>
+        <div class="page-body">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:16px;">
+                <div><div class="page-title">Products</div><div class="page-subtitle" id="count-label">Loading...</div></div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <select class="form-select" id="cat-filter" onchange="applyFilter()" style="width:160px;padding:9px 36px 9px 14px;">
+                        <option value="">All Categories</option>
+                        <option>Sneakers</option><option>Boots</option><option>Luxury</option><option>Sports</option><option>Casual</option><option>Limited</option>
+                    </select>
+                    <select class="form-select" id="sort-select" onchange="applyFilter()" style="width:160px;padding:9px 36px 9px 14px;">
+                        <option value="newest">Newest</option><option value="price_asc">Price ↑</option><option value="price_desc">Price ↓</option>
+                    </select>
+                </div>
+            </div>
+            <div class="table-card">
+                <div id="products-table"><div class="spinner"></div></div>
+                <div class="pagination" id="pagination"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="../js/admin.js"></script>
+<script>
+let page=1,keyword='',category='',sort='newest',debounceTimer;
+async function loadProducts() {
+    document.getElementById('products-table').innerHTML='<div class="spinner"></div>';
+    try {
+        let url=`${API_BASE}/products?page=${page}&sort=${sort}`;
+        if(keyword) url+=`&keyword=${encodeURIComponent(keyword)}`;
+        if(category) url+=`&category=${encodeURIComponent(category)}`;
+        const data=await api(url);
+        const {products,total,pages}=data;
+        document.getElementById('count-label').textContent=`${total||0} products in catalog`;
+        if(!products?.length){
+            document.getElementById('products-table').innerHTML=`<div class="empty-state"><div class="empty-icon">👟</div><p class="empty-title">No products found</p><a href="edit.html" class="btn btn-primary" style="margin-top:16px;"><i class="fas fa-plus"></i> Add Product</a></div>`;
+            document.getElementById('pagination').innerHTML='';return;
+        }
+        document.getElementById('products-table').innerHTML=`<div class="table-responsive"><table><thead><tr><th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Rating</th><th>Featured</th><th>Actions</th></tr></thead><tbody>
+        ${products.map(p=>`<tr>
+            <td><img src="${imageUrlOrPlaceholder(p.image)}" class="td-img" alt="${p.name}" onerror="this.onerror=null;this.src='../../images/product-image-placeholder.svg'"></td>
+            <td><strong>${p.name}</strong><br><small style="color:var(--text-3)">${p.brand}</small></td>
+            <td><span class="badge badge-gold">${p.category}</span></td>
+            <td><strong>$${p.price}</strong></td>
+            <td><span class="badge ${p.countInStock>10?'badge-success':p.countInStock>0?'badge-warning':'badge-danger'}">${p.countInStock}</span></td>
+            <td style="color:var(--gold)">${'★'.repeat(Math.round(p.rating||0))}</td>
+            <td>${p.isFeatured?'<span class="badge badge-gold">⭐</span>':'—'}</td>
+            <td><div style="display:flex;gap:8px;">
+                <a href="edit.html?id=${p._id}" class="btn btn-ghost btn-sm btn-icon"><i class="fas fa-edit"></i></a>
+                <button class="btn btn-danger btn-sm btn-icon" onclick="deleteProd('${p._id}')"><i class="fas fa-trash"></i></button>
+            </div></td>
+        </tr>`).join('')}</tbody></table></div>`;
+        const pg=document.getElementById('pagination');
+        if(pages<=1){pg.innerHTML='';return;}
+        let h='';
+        if(page>1)h+=`<button class="page-btn" onclick="goPage(${page-1})">‹</button>`;
+        for(let i=1;i<=pages;i++)h+=`<button class="page-btn ${i===page?'active':''}" onclick="goPage(${i})">${i}</button>`;
+        if(page<pages)h+=`<button class="page-btn" onclick="goPage(${page+1})">›</button>`;
+        h+=`<span class="page-info">Page ${page}/${pages} · ${total}</span>`;
+        pg.innerHTML=h;
+    } catch(e){document.getElementById('products-table').innerHTML=`<p style="padding:20px;color:var(--text-2)">Error: ${e.message}</p>`;}
+}
+function goPage(p){page=p;loadProducts();window.scrollTo({top:0,behavior:'smooth'});}
+function applyFilter(){keyword=document.getElementById('search-input').value;category=document.getElementById('cat-filter').value;sort=document.getElementById('sort-select').value;page=1;loadProducts();}
+function debouncedSearch(){clearTimeout(debounceTimer);debounceTimer=setTimeout(applyFilter,400);}
+async function deleteProd(id){
+    confirmAction('Delete this product? This cannot be undone.',async()=>{
+        try{await api(`${API_BASE}/products/${id}`,{method:'DELETE'});showToast('Deleted','success');loadProducts();}
+        catch(e){showToast(e.message,'error');}
+    });
+}
+loadProducts();
+</script>
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZIVO Admin | Dashboard</title>
+    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="admin-layout">
+    <aside class="sidebar">
+        <div class="sidebar-header"><div class="sidebar-logo">ZIVO</div><div class="sidebar-badge">Admin Portal</div></div>
+        <nav class="sidebar-nav">
+            <div class="nav-group-label">Main</div>
+            <a class="nav-item active" href="index.html"><span class="nav-icon">📊</span> Dashboard</a>
+            <a class="nav-item" href="../products/index.html"><span class="nav-icon">👟</span> Products</a>
+            <a class="nav-item" href="../orders/index.html"><span class="nav-icon">📦</span> Orders <span class="nav-badge" id="pending-badge">0</span></a>
+            <div class="nav-group-label">Settings</div>
+            <a class="nav-item" href="../../index.html"><span class="nav-icon">🏠</span> View Store</a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="sidebar-user">
+                <div class="sidebar-user-avatar" id="sidebar-user-avatar">A</div>
+                <div><div class="sidebar-user-name" id="sidebar-user-name">Admin</div><div class="sidebar-user-role">Super Admin</div></div>
+                <button class="sidebar-logout" onclick="Auth.logout()">Out</button>
+            </div>
+        </div>
+    </aside>
+    <div class="main-content">
+        <header class="top-header">
+            <div class="header-left"><button class="hamburger-admin">☰</button><div class="page-breadcrumb">Dashboard / <span>Overview</span></div></div>
+            <div class="header-right">
+                <span id="live-time" style="font-size:13px;color:var(--text-2);"></span>
+                <a href="../products/edit.html" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Add Product</a>
+            </div>
+        </header>
+        <div class="page-body">
+            <div class="page-title">Good <span id="greeting-time">Morning</span> 👋</div>
+            <div class="page-subtitle">Here's what's happening with your store today.</div>
+            <div class="stats-row">
+                <div class="stat-card"><div class="stat-card-icon">💰</div><div class="stat-card-label">Total Revenue</div><div class="stat-card-value stat-green" id="stat-revenue">—</div></div>
+                <div class="stat-card"><div class="stat-card-icon">📦</div><div class="stat-card-label">Total Orders</div><div class="stat-card-value stat-accent" id="stat-orders">—</div></div>
+                <div class="stat-card"><div class="stat-card-icon">👟</div><div class="stat-card-label">Products</div><div class="stat-card-value stat-gold" id="stat-products">—</div></div>
+                <div class="stat-card"><div class="stat-card-icon">👤</div><div class="stat-card-label">Customers</div><div class="stat-card-value stat-purple" id="stat-users">—</div></div>
+            </div>
+            <div class="chart-card" style="margin-bottom:24px;">
+                <div class="chart-header"><span class="chart-title">Revenue — Last 7 Days</span></div>
+                <canvas id="revenue-chart" height="80"></canvas>
+            </div>
+            <div class="table-card" style="margin-bottom:24px;">
+                <div class="table-header"><span class="table-title">Recent Orders</span><a href="../orders/index.html" class="btn btn-ghost btn-sm">View All</a></div>
+                <div id="recent-orders-table"><div class="spinner"></div></div>
+            </div>
+            <div class="table-card">
+                <div class="table-header"><span class="table-title">Products</span><a href="../products/index.html" class="btn btn-ghost btn-sm">Manage</a></div>
+                <div id="products-preview"><div class="spinner"></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="../js/admin.js"></script>
+<script>
+setInterval(() => {
+    const now = new Date();
+    document.getElementById('live-time').textContent = now.toLocaleTimeString('en-IN');
+    const h = now.getHours();
+    document.getElementById('greeting-time').textContent = h<12?'Morning':h<17?'Afternoon':'Evening';
+}, 1000);
+
+async function loadDashboard() {
+    try {
+        const [orderStats, userStats, products] = await Promise.all([
+            api(`${API_BASE}/orders/admin/stats`),
+            api(`${API_BASE}/users/admin/stats`),
+            api(`${API_BASE}/products?pageSize=1000`),
+        ]);
+        document.getElementById('stat-revenue').textContent = '$' + Number(orderStats.totalRevenue||0).toFixed(0);
+        document.getElementById('stat-orders').textContent = orderStats.totalOrders||0;
+        document.getElementById('stat-products').textContent = products.total||0;
+        document.getElementById('stat-users').textContent = userStats.totalUsers||0;
+        document.getElementById('pending-badge').textContent = (orderStats.totalOrders||0) - (orderStats.paidOrders||0);
+
+        const labels = [], data = [];
+        const daily = orderStats.dailyRevenue||[];
+        for (let i=6;i>=0;i--) {
+            const d = new Date(); d.setDate(d.getDate()-i);
+            const key = d.toISOString().split('T')[0];
+            labels.push(d.toLocaleDateString('en',{month:'short',day:'numeric'}));
+            const entry = daily.find(x => x._id===key);
+            data.push(entry?entry.revenue:0);
+        }
+        new Chart(document.getElementById('revenue-chart'), {
+            type:'line',
+            data:{ labels, datasets:[{ label:'Revenue ($)', data, borderColor:'#e8325a', backgroundColor:'rgba(232,50,90,0.08)', tension:0.4, fill:true, pointBackgroundColor:'#e8325a', pointRadius:5, pointHoverRadius:8 }] },
+            options:{ responsive:true, plugins:{legend:{display:false}}, scales:{ x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#888'}}, y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#888',callback:v=>'$'+v}} } }
+        });
+    } catch(e) { showToast('Stats error: '+e.message,'error'); }
+
+    try {
+        const orders = await api(`${API_BASE}/orders`);
+        const recent = orders.slice(0,8);
+        document.getElementById('recent-orders-table').innerHTML = !recent.length
+            ? '<div class="empty-state"><div class="empty-icon">📦</div><p class="empty-title">No orders yet</p></div>'
+            : `<div class="table-responsive"><table><thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th></tr></thead><tbody>
+                ${recent.map(o=>`<tr>
+                    <td><strong>${fmt.shortId(o._id)}</strong></td>
+                    <td>${o.user?.name||'Guest'}</td>
+                    <td>${o.orderItems?.length||0}</td>
+                    <td><strong style="color:var(--green)">${fmt.price(o.totalPrice)}</strong></td>
+                    <td><span class="badge ${o.isDelivered?'badge-info':o.isPaid?'badge-success':'badge-warning'}">${o.isDelivered?'Delivered':o.isPaid?'Paid':'Pending'}</span></td>
+                    <td>${fmt.date(o.createdAt)}</td>
+                </tr>`).join('')}
+                </tbody></table></div>`;
+    } catch(e) { document.getElementById('recent-orders-table').innerHTML = '<p style="padding:20px;color:var(--text-2)">Could not load orders.</p>'; }
+
+    try {
+        const prod = await api(`${API_BASE}/products?pageSize=6`);
+        document.getElementById('products-preview').innerHTML = !prod.products?.length
+            ? '<div class="empty-state"><div class="empty-icon">👟</div><p class="empty-title">No products — run seed script</p></div>'
+            : `<div class="table-responsive"><table><thead><tr><th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead><tbody>
+                ${prod.products.map(p=>`<tr>
+                    <td><img src="${imageUrlOrPlaceholder(p.image)}" class="td-img" alt="${p.name}" onerror="this.onerror=null;this.src='../../images/product-image-placeholder.svg'"></td>
+                    <td><strong>${p.name}</strong></td>
+                    <td><span class="badge badge-gold">${p.category}</span></td>
+                    <td><strong>$${p.price}</strong></td>
+                    <td><span class="badge ${p.countInStock>0?'badge-success':'badge-danger'}">${p.countInStock}</span></td>
+                    <td style="display:flex;gap:8px;">
+                        <a href="../products/edit.html?id=${p._id}" class="btn btn-ghost btn-sm btn-icon"><i class="fas fa-edit"></i></a>
+                        <button class="btn btn-danger btn-sm btn-icon" onclick="delProd('${p._id}')"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>`).join('')}
+                </tbody></table></div>`;
+    } catch(e) { document.getElementById('products-preview').innerHTML = '<p style="padding:20px;color:var(--text-2)">Could not load products.</p>'; }
+}
+
+async function delProd(id) {
+    confirmAction('Delete this product?', async()=>{
+        try { await api(`${API_BASE}/products/${id}`,{method:'DELETE'}); showToast('Deleted','success'); loadDashboard(); }
+        catch(e) { showToast(e.message,'error'); }
+    });
+}
+loadDashboard();
+</script>
+</body>
+</html>
