@@ -2,7 +2,7 @@
    ZIVO ADMIN — SHARED JS
    ============================================================ */
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = '/api';
 
 function normalizeImageUrl(value) {
     const url = new URL(value.trim());

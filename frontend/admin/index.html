@@ -50,7 +50,7 @@
     </p>
 </div>
 <script>
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = '/api';
 // Redirect if already admin
 const existing = JSON.parse(localStorage.getItem('zivo_user')||'null');
 if (existing?.isAdmin) window.location.href = 'dashboard/index.html';
